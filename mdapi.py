@@ -1,23 +1,20 @@
 import inspect
-
+from market_data_publisher import Level1SnapshotPublisher
+from market_data import Level1Snapshot
 from openctp_ctp import mdapi
-
+import time
+import datetime as dt
 import config
-import json
 
-from kafka import KafkaProducer
-from kafka.errors import KafkaError
-
-KAFKA_TOPIC = "market-data"
+EIGHT_HOUR_SECONDS = 8 * 3600
 
 
 class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
-    def __init__(self, front:str):
+    def __init__(self, front: str):
         print("-------------------------------- 启动 mduser api demo ")
         super().__init__()
         self._front = front
-        self.producer = KafkaProducer(bootstrap_servers="119.45.139.76:19092")
-
+        self.publisher = Level1SnapshotPublisher()
         self._api = mdapi.CThostFtdcMdApi.CreateFtdcMdApi(
             "market"
         )  # type: mdapi.CThostFtdcMdApi
@@ -32,18 +29,6 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
         # 初始化行情实例
         self._api.Init()
         print("初始化成功")
-    
-    def sendjsondata(self, params):
-        try:
-            params_message = params
-            producer = self.producer
-            v = producer.send(topic="level_1_quotes", key=None,  value=params_message.encode('utf-8'))
-            # _ = v.get(timeout=10)
-            print(f"Successfully produced message to topic: market-data, {v}")
-            producer.flush()
-            # producer.close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-        except KafkaError as e:
-            print(e)
 
     def OnFrontConnected(self):
         """行情前置连接成功"""
@@ -81,30 +66,30 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
         self, pDepthMarketData: mdapi.CThostFtdcDepthMarketDataField
     ):
         """深度行情通知"""
-        params = []
         data = {}
-        
+
         for name, value in inspect.getmembers(pDepthMarketData):
-            
             if name[0].isupper():
-                params.append(f"{name}={value}")
-                data.update({f"{name}":f"{value}"})
-                
-                
-        # params.append(data)
-        del data["ExchangeID"]
-        del data["ExchangeInstID"]
-        v_value = json.dumps(data)
-        print("深度行情:", v_value)
-        producer = self.producer
-        print("producer---------", producer)
-        self.sendjsondata(v_value)
-        
-        
-        
-        
-
-
+                data[name] = value
+        print(data)
+        exchange_time = dt.datetime.strptime(
+            f"{data['TradingDay']}T{data['UpdateTime']}", "%Y%m%dT%H:%M:%S"
+        )
+        if exchange_time.hour > 15:
+            exchange_time = exchange_time - dt.timedelta(days=1)
+        exchange_time = exchange_time.timestamp() * 1000 + data["UpdateMillisec"]
+        level1snapshot = Level1Snapshot(
+            symbol=data["InstrumentID"],
+            exchange="SH",
+            receive_time=int((time.time() + EIGHT_HOUR_SECONDS) * 1000),
+            exchange_time=exchange_time,
+            bid=int(data["BidPrice1"] * 1_000_000),
+            bid_qty=data["BidVolume1"],
+            ask=int(data["AskPrice1"] * 1_000_000),
+            ask_qty=data["AskVolume1"],
+        )
+        print(level1snapshot)
+        self.publisher.add_record(level1snapshot)
 
     def OnRspSubMarketData(
         self,
@@ -137,4 +122,3 @@ if __name__ == "__main__":
     instruments = ("zn2401", "fu2401", "sn2401", "MA2401")
 
     spi.wait()
-

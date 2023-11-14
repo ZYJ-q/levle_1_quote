@@ -1,0 +1,40 @@
+{
+    "type": "record",
+    "name": "level_1_quote",
+    "fields": [
+        {
+            "name": "receive_time",
+            "type": "long",
+            "logicalType": "timestamp-millis"
+        },
+        {
+            "name": "exchange_time",
+            "type": "long",
+            "logicalType": "timestamp-millis"
+        },
+        {
+            "name": "symbol",
+            "type": "string"
+        },
+        {
+            "name": "exchange",
+            "type": "string"
+        },
+        {
+            "name": "bid",
+            "type": "long"
+        },
+        {
+            "name": "bid_qty",
+            "type": "long"
+        },
+        {
+            "name": "ask",
+            "type": "long"
+        },
+        {
+            "name": "ask_qty",
+            "type": "long"
+        }
+    ]
+}
