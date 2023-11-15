@@ -6,8 +6,6 @@ import time
 import datetime as dt
 import config
 
-EIGHT_HOUR_SECONDS = 8 * 3600
-
 
 class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
     def __init__(self, front: str):
@@ -48,7 +46,8 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
     ):
         """登录响应"""
         if pRspInfo and pRspInfo.ErrorID != 0:
-            print(f"登录失败: ErrorID={pRspInfo.ErrorID}, ErrorMsg={pRspInfo.ErrorMsg}")
+            print(
+                f"登录失败: ErrorID={pRspInfo.ErrorID}, ErrorMsg={pRspInfo.ErrorMsg}")
             return
 
         print("登录成功")
@@ -77,11 +76,12 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
         )
         if exchange_time.hour > 15:
             exchange_time = exchange_time - dt.timedelta(days=1)
-        exchange_time = exchange_time.timestamp() * 1000 + data["UpdateMillisec"]
+        exchange_time = exchange_time.timestamp() * 1000 + \
+            data["UpdateMillisec"]
         level1snapshot = Level1Snapshot(
             symbol=data["InstrumentID"],
-            exchange="SH",
-            receive_time=int((time.time() + EIGHT_HOUR_SECONDS) * 1000),
+            exchange="SHFE",
+            receive_time=int(time.time() * 1000),
             exchange_time=exchange_time,
             bid=int(data["BidPrice1"] * 1_000_000),
             bid_qty=data["BidVolume1"],
