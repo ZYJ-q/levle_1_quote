@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message Quotes {
+  string symbol = 1;
+  string exchange = 2;
+  int64 receive_time = 3;
+  int64 exchange_time = 4;
+  int64 bid = 5;
+  int64 bid_qty = 6;
+  int64 ask = 7;
+  int64 ask_qty = 8;
+}

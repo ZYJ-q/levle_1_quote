@@ -1,6 +1,6 @@
 import inspect
+import market_data_pb2 as md
 from market_data_publisher import Level1SnapshotPublisher
-from market_data import Level1Snapshot
 from openctp_ctp import mdapi
 import time
 import datetime as dt
@@ -46,8 +46,7 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
     ):
         """登录响应"""
         if pRspInfo and pRspInfo.ErrorID != 0:
-            print(
-                f"登录失败: ErrorID={pRspInfo.ErrorID}, ErrorMsg={pRspInfo.ErrorMsg}")
+            print(f"登录失败: ErrorID={pRspInfo.ErrorID}, ErrorMsg={pRspInfo.ErrorMsg}")
             return
 
         print("登录成功")
@@ -76,9 +75,8 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
         )
         if exchange_time.hour > 15:
             exchange_time = exchange_time - dt.timedelta(days=1)
-        exchange_time = exchange_time.timestamp() * 1000 + \
-            data["UpdateMillisec"]
-        level1snapshot = Level1Snapshot(
+        exchange_time = exchange_time.timestamp() * 1000 + data["UpdateMillisec"]
+        level1snapshot = md.Quotes(
             symbol=data["InstrumentID"],
             exchange="SHFE",
             receive_time=int(time.time() * 1000),

@@ -1,11 +1,11 @@
 from datatypes import *
-from redpanda_publisher import RedpandaPublisher, dataclass_to_dict
-from market_data import Level1Snapshot
+from redpanda_publisher import RedpandaPublisher
+import market_data_pb2 as md
 
 
 class Level1SnapshotPublisher(RedpandaPublisher):
     def __init__(self):
-        super().__init__("level_1_quote.avsc", dataclass_to_dict, "level_1_quotes")
+        super().__init__(md.Quotes, "quotes")
 
 
 if __name__ == "__main__":
@@ -25,8 +25,15 @@ if __name__ == "__main__":
         bid *= 1_000_000
         ask *= 1_000_000
         ask_qty = random.randint(1, 10)
-        snapshot = Level1Snapshot(
-            symbol, exchange, receive_time, exchange_time, bid, bid_qty, ask, ask_qty
+        snapshot = md.Quotes(
+            symbol=symbol,
+            exchange=exchange,
+            receive_time=receive_time,
+            exchange_time=exchange_time,
+            bid=bid,
+            bid_qty=bid_qty,
+            ask=ask,
+            ask_qty=ask_qty,
         )
         publisher.add_record(snapshot)
         time.sleep(1)
