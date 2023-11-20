@@ -75,7 +75,7 @@ class CMdSpiImpl(mdapi.CThostFtdcMdSpi):
         )
         if exchange_time.hour > 15:
             exchange_time = exchange_time - dt.timedelta(days=1)
-        exchange_time = exchange_time.timestamp() * 1000 + data["UpdateMillisec"]
+        exchange_time = int(exchange_time.timestamp() * 1000 + data["UpdateMillisec"])
         level1snapshot = md.Quotes(
             symbol=data["InstrumentID"],
             exchange="SHFE",
